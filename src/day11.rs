@@ -1,3 +1,7 @@
+use std::vec;
+
+use rayon::prelude::*;
+
 #[derive(Debug, Clone, Copy)]
 enum Value {
     Old,
@@ -57,16 +61,16 @@ pub fn generator(input: &str) -> Vec<(Monkey, Vec<u64>)> {
     });
 
     let expression = parser!(
-        (lhs: operand) (op: operator) (rhs: operand) => Expr(op, lhs, rhs)
+        (lhs: operand) " " (op: operator) " " (rhs: operand) => Expr(op, lhs, rhs)
     );
 
     let monkey = parser!(
-            line("Monkey #" usize)
-            line(" . Starting items:" (initial: repeat_sep(u64, ", ")))
-            line(" . Operation: new = " (expr: expression))
-            line(" . Test: divisible by " (divisor: u64))
-            line(" .   If true: throw to monkey #" (if_zero: usize))
-            line(" .   If false: throw to monkey #" (if_non_zero: usize))
+            line("Monkey " usize ":")
+            line("  Starting items: " (initial: repeat_sep(u64, ", ")))
+            line("  Operation: new = " (expr: expression))
+            line("  Test: divisible by " (divisor: u64))
+            line("    If true: throw to monkey " (if_zero: usize))
+            line("    If false: throw to monkey " (if_non_zero: usize))
     );
     let data = parser!(sections(monkey)).parse(input).unwrap();
     data.iter()
@@ -85,5 +89,117 @@ pub fn generator(input: &str) -> Vec<(Monkey, Vec<u64>)> {
 }
 
 pub fn part_1(input: &Vec<(Monkey, Vec<u64>)>) -> usize {
-    0
+    let mut inventory = input
+        .iter()
+        .map(|(_, initial)| initial.clone())
+        .collect::<Vec<_>>();
+    let monkeys = input.iter().map(|(monkey, _)| monkey).collect::<Vec<_>>();
+    let mut inspected = vec![0; monkeys.len()];
+    for _ in 0..20 {
+        for (idx, monkey) in monkeys.iter().enumerate() {
+            let inv = inventory[idx].drain(..).collect::<Vec<_>>();
+            for item in inv {
+                let new = Expr::eval(&monkey.expr, item) / 3;
+                inspected[idx] += 1;
+                if new % monkey.divisor == 0 {
+                    inventory[monkey.if_zero].push(new);
+                } else {
+                    inventory[monkey.if_non_zero].push(new);
+                }
+            }
+        }
+    }
+    // multiply the two largest inspected values
+    inspected.sort();
+    inspected[inspected.len() - 1] * inspected[inspected.len() - 2]
+}
+
+pub fn part_2(input: &Vec<(Monkey, Vec<u64>)>) -> usize {
+    let mut inventory = input
+        .iter()
+        .map(|(_, initial)| initial.clone())
+        .collect::<Vec<_>>();
+    let monkeys = input.iter().map(|(monkey, _)| monkey).collect::<Vec<_>>();
+    let mut inspected = vec![0; monkeys.len()];
+    let div: u64 = monkeys.iter().map(|m| m.divisor).product();
+    for _ in 0..10_000 {
+        for (idx, monkey) in monkeys.iter().enumerate() {
+            let inv = inventory[idx].drain(..).collect::<Vec<_>>();
+            for item in inv {
+                let new = Expr::eval(&monkey.expr, item) % div;
+                inspected[idx] += 1;
+                if new % monkey.divisor == 0 {
+                    inventory[monkey.if_zero].push(new);
+                } else {
+                    inventory[monkey.if_non_zero].push(new);
+                }
+            }
+        }
+    }
+    // println!("{:?}", inspected.iter().cloned().sum::<usize>());
+    // multiply the two largest inspected values
+    inspected.sort();
+    inspected[inspected.len() - 1] * inspected[inspected.len() - 2]
+}
+
+fn one_round(
+    monkeys: &Vec<&Monkey>,
+    sv: u64,
+    si: usize,
+    inspected: &mut Vec<usize>,
+    div: u64,
+) -> (u64, usize) {
+    let mut si = si;
+    let mut sv = sv;
+    loop {
+        let monkey = &monkeys[si];
+        sv = Expr::eval(&monkey.expr, sv) % div;
+        inspected[si] += 1;
+        let next = if sv % monkey.divisor == 0 {
+            monkey.if_zero
+        } else {
+            monkey.if_non_zero
+        };
+        if next <= si {
+            return (sv, next);
+        }
+        si = next;
+    }
+}
+
+pub fn part_2_rayon(input: &Vec<(Monkey, Vec<u64>)>) -> usize {
+    let monkeys = input.iter().map(|(monkey, _)| monkey).collect::<Vec<_>>();
+    let div: u64 = monkeys.iter().map(|m| m.divisor).product();
+    let inventory = input.iter().map(|(_, initial)| initial.clone());
+    let pairs = inventory
+        .enumerate()
+        .flat_map(|(i, v)| v.iter().map(|n| (i, *n)).collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let counts = pairs
+        .par_iter()
+        .map(|(s, v)| {
+            (0..10_000)
+                .fold(
+                    (*s, *v, vec![0; monkeys.len()]),
+                    |(monke, v, mut inspected), _| {
+                        let (v, monke) = one_round(&monkeys, v, monke, &mut inspected, div);
+                        (monke, v, inspected)
+                    },
+                )
+                .2
+        })
+        .reduce(
+            || vec![0; monkeys.len()],
+            |mut a, b| {
+                for (i, v) in b.iter().enumerate() {
+                    a[i] += v;
+                }
+                a
+            },
+        );
+    // multiply the two largest inspected values
+    let mut counts = counts.iter().collect::<Vec<_>>();
+    // println!("{:?}", counts.iter().cloned().sum::<usize>());
+    counts.sort();
+    counts[counts.len() - 1] * counts[counts.len() - 2]
 }

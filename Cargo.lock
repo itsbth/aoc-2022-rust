@@ -23,6 +23,8 @@ version = "0.1.0"
 dependencies = [
  "aoc-main",
  "aoc-parse",
+ "num-modular",
+ "rayon",
 ]
 
 [[package]]
@@ -583,6 +585,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "num-modular"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64a5fe11d4135c3bcdf3a95b18b194afa9608a5f6ff034f5d857bc9a27fb0119"
+dependencies = [
+ "num-integer",
  "num-traits",
 ]
 
