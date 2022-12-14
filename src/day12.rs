@@ -55,7 +55,7 @@ fn print_grid(
     visited: &std::collections::HashSet<(usize, usize)>,
     heap: &std::collections::BinaryHeap<Node>,
 ) {
-    return;
+    // return;
     let heap_set: std::collections::HashSet<_> = heap.iter().cloned().collect();
     let mut buffer = String::new();
     // clear screen
@@ -232,4 +232,40 @@ pub fn part_2((_start, end, input): &Input) -> usize {
         }
     }
     panic!("no path found")
+}
+
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_generator() {
+        let input = "abcde\n\
+        fghij\n\
+        klmno\n";
+        let expected: HashMap<(usize, usize), usize> = HashMap::from_iter(vec![
+            ((0, 0), 0),
+            ((1, 0), 1),
+            ((2, 0), 2),
+            ((3, 0), 3),
+            ((4, 0), 4),
+            ((0, 1), 5),
+            ((1, 1), 6),
+            ((2, 1), 7),
+            ((3, 1), 8),
+            ((4, 1), 9),
+            ((0, 2), 10),
+            ((1, 2), 11),
+            ((2, 2), 12),
+            ((3, 2), 13),
+            ((4, 2), 14),
+        ]);
+        let keys = expected.keys().cloned().collect::<Vec<_>>();
+        let (_, _, actual) = generator(input);
+        assert_eq!(actual.len(), expected.len(), "lengths differ");
+        for k in keys {
+            // TODO: It's easier to flip the key, but I should really fix the expected hashmap
+            let flipped = (k.1, k.0);
+            assert_eq!(actual.get(&flipped), expected.get(&k), "key: {:?}", k);
+        }
+    }
 }
