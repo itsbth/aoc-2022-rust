@@ -8,5 +8,5 @@ aoc_main::main! {
     day11 : generator => part_1, part_2, part_2_rayon;
     day12 : generator => part_1, part_1_dijkstras, part_2;
     day13 : generator => part_1, part_2;
-    day14 : generator => part_1, part_2;
+    day14 : generator => part_1, part_1_backtracking, part_2, part_2_backtracking;
 }

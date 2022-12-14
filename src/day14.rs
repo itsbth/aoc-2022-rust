@@ -1,5 +1,6 @@
+use std::collections::VecDeque;
+
 type Grid = Vec<Vec<bool>>;
-type Point = (usize, usize);
 
 const GRID_SIZE: usize = 1024; // TODO: make this dynamic?
 
@@ -89,6 +90,40 @@ pub fn part_1(input: &Grid) -> i64 {
     count
 }
 
+pub fn part_1_backtracking(input: &Grid) -> i64 {
+    let mut grid = input.clone();
+    let mut qq = VecDeque::new();
+    let mut count = 0;
+    qq.push_back((500, 0));
+    'outer: while let Some((x, y)) = qq.pop_back() {
+        if grid[x][y] {
+            continue;
+        }
+        let (mut x, mut y) = (x, y);
+        loop {
+            if y >= GRID_SIZE - 1 {
+                break 'outer;
+            }
+            qq.push_back((x, y));
+            // try to move down, down left, down right
+            if !grid[x][y + 1] {
+                y += 1;
+            } else if !grid[x - 1][y + 1] {
+                x -= 1;
+                y += 1;
+            } else if !grid[x + 1][y + 1] {
+                x += 1;
+                y += 1;
+            } else {
+                grid[x][y] = true;
+                count += 1;
+                break;
+            }
+        }
+    }
+    count
+}
+
 // part 2: there's a floor at max_y + 2. Run the simulation until the start point (500, 0) is blocked
 pub fn part_2(input: &Grid) -> i64 {
     let mut grid = input.clone();
@@ -116,6 +151,57 @@ pub fn part_2(input: &Grid) -> i64 {
                 count += 1;
                 break;
             }
+            // try to move down, down left, down right
+            if !grid[x][y + 1] {
+                y += 1;
+            } else if !grid[x - 1][y + 1] {
+                x -= 1;
+                y += 1;
+            } else if !grid[x + 1][y + 1] {
+                x += 1;
+                y += 1;
+            } else {
+                grid[x][y] = true;
+                count += 1;
+                if x == 500 && y == 0 {
+                    break 'outer;
+                }
+                break;
+            }
+        }
+    }
+    count
+}
+
+pub fn part_2_backtracking(input: &Grid) -> i64 {
+    let mut grid = input.clone();
+    let mut qq = VecDeque::new();
+    let mut count = 0;
+    let floor = grid
+        .iter()
+        .map(|col| {
+            col.iter()
+                .enumerate()
+                .flat_map(|(idx, solid)| if *solid { Some(idx) } else { None })
+                .max()
+                .unwrap_or(0)
+        })
+        .max()
+        .unwrap()
+        + 2;
+    qq.push_back((500, 0));
+    'outer: while let Some((x, y)) = qq.pop_back() {
+        if grid[x][y] {
+            continue;
+        }
+        let (mut x, mut y) = (x, y);
+        loop {
+            if y == floor - 1 {
+                grid[x][y] = true;
+                count += 1;
+                break;
+            }
+            qq.push_back((x, y));
             // try to move down, down left, down right
             if !grid[x][y + 1] {
                 y += 1;
