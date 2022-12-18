@@ -93,13 +93,31 @@ pub fn part_1(input: &[Voxel]) -> usize {
 }
 
 const DIRECTIONS: [(i32, i32, i32); 6] = [
+    (1, 0, 0),
+    (0, 1, 0),
     (0, 0, 1),
     (0, 0, -1),
-    (0, 1, 0),
     (0, -1, 0),
-    (1, 0, 0),
     (-1, 0, 0),
 ];
+
+pub fn part_1_alt(input: &[Voxel]) -> usize {
+    let input: HashSet<_> = input.iter().collect();
+    let mut overlapping = 0;
+    for voxel in input.iter() {
+        for (dx, dy, dz) in DIRECTIONS[..3].iter() {
+            let neighbor = Voxel {
+                x: voxel.x + dx,
+                y: voxel.y + dy,
+                z: voxel.z + dz,
+            };
+            if input.contains(&neighbor) {
+                overlapping += 1;
+            }
+        }
+    }
+    input.len() * 6 - 2 * overlapping
+}
 
 // part 2 was total surface, but we want the exterior surface
 pub fn part_2(input: &[Voxel]) -> usize {
