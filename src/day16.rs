@@ -3,8 +3,6 @@ use std::{
     time::Instant,
 };
 
-use rayon::max_num_threads;
-
 pub struct Valve {
     flow: usize,
     edges: HashSet<String>,
@@ -123,13 +121,13 @@ pub fn part_1(input: &Vec<IndexValve>) -> usize {
         // path: vec![0],
     };
     let mut visited = HashSet::new();
-    let mut iterations = 0; // just used for printing progress
-    fn fact(n: usize) -> usize {
-        (1..=n).product()
-    }
+    // let mut iterations = 0; // just used for printing progress
+    // fn fact(n: usize) -> usize {
+    //     (1..=n).product()
+    // }
     // theoretical upper bound on the number of states
-    let start = Instant::now();
-    let limit = fact(non_zero_nodes.len());
+    // let start = Instant::now();
+    // let limit = fact(non_zero_nodes.len());
     while let Some(state) = queue.pop() {
         // if iterations % 100_000 == 0 {
         //     let elapsed = start.elapsed().as_secs_f64();
@@ -449,6 +447,7 @@ pub fn part_2(input: &Vec<IndexValve>) -> usize {
     max_flow
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
